@@ -46,6 +46,8 @@ def handle_picamera(folder):
     try:
         while True:
             frame = picam2.capture_array()
+            #resize the frame to 1080p
+            frame = cv2.resize(frame, (1920, 1080))
             save_image(frame, folder)
             time.sleep(CAPTURE_INTERVAL)
     except KeyboardInterrupt:
@@ -61,14 +63,14 @@ def handle_usb_camera(folder):
         print(f"❌ Failed to open USB camera at {device_path}")
         return
     print(f"✅ USB camera opened at {device_path}")
+
+    # Set resolution to 1080p
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+
     try:
         while True:
             ret, frame = cap.read()
-            if ret:
-                save_image(frame, folder)
-            time.sleep(CAPTURE_INTERVAL)
-    except KeyboardInterrupt:
-        print("USB camera thread interrupted.")
     finally:
         cap.release()
 
