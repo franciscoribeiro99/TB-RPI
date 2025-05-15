@@ -32,7 +32,6 @@ def save_image(frame, folder):
 
 def get_camera_index():
     # This function can be used to get the camera index dynamically if needed
-    def get_camera_index():
         for index in range(10):  # Check the first 10 indices
             cap = cv2.VideoCapture(index)
             if cap.isOpened():
@@ -107,13 +106,16 @@ def main():
         thread_usb = threading.Thread(target=handle_usb_camera, args=(camera_index, folder_usb))
     else:
         print("No USB camera found. Skipping USB camera thread.")
-        
+
 
     thread_picam.start()
-    thread_usb.start()
+    if camera_index != -1:
+        thread_usb.start()
 
     thread_picam.join()
-    thread_usb.join()
+    if camera_index != -1:
+        thread_usb.join()
+
 
 if __name__ == "__main__":
     main()
