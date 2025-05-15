@@ -30,6 +30,16 @@ def save_image(frame, folder):
     cv2.imwrite(path, frame)
     print(f"Image saved: {path}")
 
+def get_camera_index():
+    # This function can be used to get the camera index dynamically if needed
+    def get_camera_index():
+        for index in range(10):  # Check the first 10 indices
+            cap = cv2.VideoCapture(index)
+            if cap.isOpened():
+                cap.release()
+                return index
+        return -1  # Return -1 if no camera is found
+
 # Camera initialization
 def initialize_picamera(IR_mode=True):
     picam2 = Picamera2()
@@ -89,8 +99,15 @@ def main():
     folder_picam = create_folder("images_picam")
     folder_usb = create_folder("images_usb")
 
+    # get camera index dynamically
+    camera_index = get_camera_index()
+
     thread_picam = threading.Thread(target=handle_picamera, args=(folder_picam,))
-    thread_usb = threading.Thread(target=handle_usb_camera, args=(0, folder_usb))  # USB cam index 0
+    if camera_index != -1:
+        thread_usb = threading.Thread(target=handle_usb_camera, args=(camera_index, folder_usb))
+    else:
+        print("No USB camera found. Skipping USB camera thread.")
+        
 
     thread_picam.start()
     thread_usb.start()
