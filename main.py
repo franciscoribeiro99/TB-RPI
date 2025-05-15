@@ -15,11 +15,6 @@ def create_folder(folder_name):
         os.makedirs(folder_name)
     return folder_name
 
-def should_capture(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    std_dev = np.std(gray)
-    return std_dev > THRESHOLD_STD
-
 def save_image(frame, folder):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     path = os.path.join(folder, f"image_{timestamp}.jpg")
@@ -51,13 +46,13 @@ def handle_picamera(folder):
     try:
         while True:
             frame = picam2.capture_array()
-            if should_capture(frame):
-                save_image(frame, folder)
+            save_image(frame, folder)
             time.sleep(CAPTURE_INTERVAL)
     except KeyboardInterrupt:
         print("PiCamera stopped.")
     finally:
         picam2.close()
+
 
 def handle_usb_camera(folder):
     device_path = '/dev/video1'
@@ -69,13 +64,14 @@ def handle_usb_camera(folder):
     try:
         while True:
             ret, frame = cap.read()
-            if ret and should_capture(frame):
+            if ret:
                 save_image(frame, folder)
             time.sleep(CAPTURE_INTERVAL)
     except KeyboardInterrupt:
         print("USB camera thread interrupted.")
     finally:
         cap.release()
+
 
 def main():
     base_folder = "/app/images"
