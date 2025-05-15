@@ -6,7 +6,12 @@ services:
     cap_add:
       - SYS_RAWIO
     devices:
-      - /dev:/dev
+      - /dev/video0:/dev/video0       
+      - /dev/media2:/dev/media2       
+      - /dev/vchiq:/dev/vchiq         # Requis par libcamera
+      - /dev/video0:/dev/video1    
+      
+
     volumes:
       - ./images:/app/images
       - /run:/run
