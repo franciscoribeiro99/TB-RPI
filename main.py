@@ -18,7 +18,7 @@ def create_folder(folder_name):
 # Camera initialization
 def initialize_camera(IR_mode=True):
     picam2 = Picamera2()
-    picam2.configure(picam2.create_still_configuration(main={"size": (640, 480)}))
+    picam2.configure(picam2.create_still_configuration(main={"size": (2592, 1944)}))
     picam2.start()
     if IR_mode:
         picam2.set_controls({
