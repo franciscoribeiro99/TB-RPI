@@ -52,6 +52,8 @@ def handle_picamera(folder):
             time.sleep(CAPTURE_INTERVAL)
     except KeyboardInterrupt:
         print("PiCamera stopped.")
+    except Exception as e:
+        print(f"Error with PiCamera: {e}")
     finally:
         picam2.close()
 
@@ -71,6 +73,12 @@ def handle_usb_camera(folder):
     try:
         while True:
             ret, frame = cap.read()
+            save_image(frame, folder)
+            time.sleep(CAPTURE_INTERVAL)
+    except KeyboardInterrupt:
+        print("USB camera stopped.")
+    except Exception as e:
+        print(f"Error with USB camera: {e}")
     finally:
         cap.release()
 
