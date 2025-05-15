@@ -3,10 +3,15 @@ services:
     build: .
     container_name: camera_ir
     privileged: true
+    cap_add:
+      - SYS_RAWIO
     devices:
-      - /dev/video0:/dev/video0
+      - /dev:/dev
     volumes:
       - ./images:/app/images
+      - /run:/run
+      - /run/udev:/run/udev:ro
+      - /sys:/sys
     environment:
-      - CAPTURE_INTERVAL=0.2  
+      - CAPTURE_INTERVAL=0.2
     command: python3 main.py
