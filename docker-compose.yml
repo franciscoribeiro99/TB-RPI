@@ -1,0 +1,12 @@
+services:
+  camera:
+    build: .
+    container_name: camera_ir
+    privileged: true
+    devices:
+      - /dev/video0:/dev/video0
+    volumes:
+      - ./images:/app/images
+    environment:
+      - CAPTURE_INTERVAL=0.2  
+    command: python3 main.py
