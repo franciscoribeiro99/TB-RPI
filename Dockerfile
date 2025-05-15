@@ -27,6 +27,9 @@ RUN apt update && apt install -y \
     pkg-config \
     libevent-dev \
     pybind11-dev \
+    libkms++-dev \
+    libfmt-dev \
+    libdrm-dev \
     && apt clean
 
 # Install python libraries
@@ -35,7 +38,7 @@ RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
 RUN rm /tmp/requirements.txt
 
 # Install meson and ninja for libcamera
-RUN pip install meson ninja jinja2 pyyaml ply
+RUN pip install meson ninja jinja2 pyyaml ply rpi-kms
 
 # clone and install libcamera
 RUN git clone https://github.com/raspberrypi/libcamera.git /opt/libcamera
