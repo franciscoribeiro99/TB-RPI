@@ -1,22 +1,16 @@
 services:
   camera:
     build: .
-    container_name: camera_ir
+    container_name: camera_capture
     privileged: true
-    cap_add:
-      - SYS_RAWIO
     devices:
-      - /dev/video0:/dev/video0       
-      - /dev/media2:/dev/media2       
-      - /dev/vchiq:/dev/vchiq         # Requis par libcamera
-      - /dev/video0:/dev/video1    
-      
+      - /dev/video0:/dev/video0
+      - /dev/video2:/dev/video2
 
     volumes:
       - ./images:/app/images
-      - /run:/run
-      - /run/udev:/run/udev:ro
-      - /sys:/sys
     environment:
       - CAPTURE_INTERVAL=0.2
+      - MAX_CAMERAS=2
+      - CAMERA_RESOLUTION=640x480
     command: python3 main.py

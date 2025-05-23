@@ -2,17 +2,16 @@ import os
 import time
 import threading
 from datetime import datetime
-from picamera2 import Picamera2
 import cv2
-import numpy as np
+import glob
 
-# Parameters
-THRESHOLD_STD = 10.0
+# get environment variables
 CAPTURE_INTERVAL = float(os.getenv("CAPTURE_INTERVAL", "0.2"))
+MAX_CAMERAS = (int(os.getenv("MAX_CAMERAS", "2")) or 2)
+camera_resolution = os.getenv("CAMERA_RESOLUTION", "640x480")
 
 def create_folder(folder_name):
-    if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
+    os.makedirs(folder_name, exist_ok=True)
     return folder_name
 
 def save_image(frame, folder):
@@ -21,85 +20,74 @@ def save_image(frame, folder):
     cv2.imwrite(path, frame)
     print(f"Image saved: {path}")
 
-def initialize_picamera(IR_mode=True):
-    picam2 = Picamera2()
-    picam2.configure(picam2.create_still_configuration(main={"size": (2592, 1944)}))
-    picam2.start()
-    if IR_mode:
-        picam2.set_controls({
-            "AwbEnable": False,
-            "AwbMode": 0,
-            "AnalogueGain": 4.0,
-            "ExposureTime": 10000
-        })
-    else:
-        picam2.set_controls({
-            "AwbEnable": True,
-            "AwbMode": 1,
-            "AnalogueGain": 1.0,
-            "ExposureTime": 100000
-        })
-    return picam2
-
-def handle_picamera(folder):
-    picam2 = initialize_picamera(IR_mode=True)
-    try:
-        while True:
-            frame = picam2.capture_array()
-            #resize the frame to 1080p
-            frame = cv2.resize(frame, (1920, 1080))
-            save_image(frame, folder)
-            time.sleep(CAPTURE_INTERVAL)
-    except KeyboardInterrupt:
-        print("PiCamera stopped.")
-    except Exception as e:
-        print(f"Error with PiCamera: {e}")
-    finally:
-        picam2.close()
-
-
-def handle_usb_camera(folder):
-    device_path = '/dev/video1'
+def handle_usb_camera(folder, device_path):
     cap = cv2.VideoCapture(device_path)
     if not cap.isOpened():
-        print(f"❌ Failed to open USB camera at {device_path}")
+        print(f"Failed to open USB camera at {device_path}")
         return
-    print(f"✅ USB camera opened at {device_path}")
 
-    # Set resolution to 1080p
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
+    # tested on a Raspberry Pi 4 with a 1080p camera 2x it fails
+    # Reduce resolution to avoid USB bandwidth issues
+    width, height = map(int, camera_resolution.split('x'))
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+    print(f"USB camera opened at {device_path}")
+
+    failure_count = 0
     try:
         while True:
             ret, frame = cap.read()
+            if not ret:
+                failure_count += 1
+                print(f"Frame read failed from {device_path} ({failure_count})")
+                if failure_count > 5:
+                    print(f"Too many failures on {device_path}, stopping.")
+                    break
+                time.sleep(1)
+                continue
             save_image(frame, folder)
+            failure_count = 0
             time.sleep(CAPTURE_INTERVAL)
     except KeyboardInterrupt:
-        print("USB camera stopped.")
-    except Exception as e:
-        print(f"Error with USB camera: {e}")
+        print(f"Camera at {device_path} stopped.")
     finally:
         cap.release()
 
+# function to find both cameras
+def find_working_cameras(max_devices=10, max_cameras=2):
+    working_devices = []
+    for i in range(max_devices):
+        dev = f"/dev/video{i}"
+        cap = cv2.VideoCapture(dev)
+        if cap.isOpened():
+            ret, _ = cap.read()
+            if ret:
+                print(f"Found usable camera at {dev}")
+                working_devices.append(dev)
+            else:
+                print(f"Camera at {dev} opened but didn't deliver frames")
+            cap.release()
+        if len(working_devices) >= max_cameras:
+            break
+    return working_devices
 
 def main():
     base_folder = "/app/images"
-    if not os.path.exists(base_folder):
-        os.makedirs(base_folder)
-    print(f"Base folder created: {base_folder}")
-    
-    folder_picam = create_folder(os.path.join(base_folder, "images_picam"))
-    folder_usb = create_folder(os.path.join(base_folder, "images_usb"))
+    create_folder(base_folder)
 
-    thread_picam = threading.Thread(target=handle_picamera, args=(folder_picam,))
-    thread_usb = threading.Thread(target=handle_usb_camera, args=(folder_usb,))
+    devices = find_working_cameras(max_cameras=MAX_CAMERAS)
 
-    thread_picam.start()
-    thread_usb.start()
+    threads = []
+    for idx, dev in enumerate(devices):
+        folder = create_folder(os.path.join(base_folder, f"usb_cam_{idx}"))
+        t = threading.Thread(target=handle_usb_camera, args=(folder, dev))
+        t.start()
+        threads.append(t)
 
-    thread_picam.join()
-    thread_usb.join()
+    for t in threads:
+        t.join()
 
 if __name__ == "__main__":
     main()
