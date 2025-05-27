@@ -7,7 +7,9 @@ RUN apt update && apt install -y \
     libopencv-dev \
     python3-opencv \
     v4l-utils \
+    libcap-dev \
     && apt clean
+    
 
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
