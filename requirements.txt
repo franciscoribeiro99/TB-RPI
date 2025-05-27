@@ -1,3 +1,2 @@
 numpy
-picamera2
 opencv-python

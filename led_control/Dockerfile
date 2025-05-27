@@ -8,12 +8,12 @@ RUN apt update && apt install -y \
     scons \
     libjpeg-dev \
     libopenjp2-7 \
-    libtiff5 \
+    libtiff-dev \
     libatlas-base-dev \
     libffi-dev \
     libfreetype6-dev \
     libportaudio2 \
-    libturbojpeg \
+    libturbojpeg0 \
     && apt clean
 
 COPY requirements.txt .
