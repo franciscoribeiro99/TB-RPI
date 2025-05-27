@@ -14,3 +14,17 @@ services:
       - MAX_CAMERAS=2
       - CAMERA_RESOLUTION=640x480
     command: python3 main.py
+  
+  led_control:
+    build:
+      context: ./led_control
+    container_name: led_control_ui
+    ports:
+      - "8501:8501"
+    privileged: true                 
+    devices:
+      - /dev/mem:/dev/mem               
+    volumes:
+      - ./images:/app/images
+    depends_on:
+      - camera
