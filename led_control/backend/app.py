@@ -69,6 +69,15 @@ def set_leds():
 def stats():
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage('/')
+    cpu_temp = None
+
+    # Lire la température CPU (Raspberry Pi)
+    try:
+        with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+            cpu_temp = int(f.read()) / 1000.0  # convertit en °C
+    except:
+        cpu_temp = None
+
     return jsonify({
         "memory": {
             "used": mem.used // (1024**2),
@@ -79,6 +88,9 @@ def stats():
             "used": disk.used // (1024**2),
             "total": disk.total // (1024**2),
             "percent": disk.percent
+        },
+        "cpu": {
+            "temperature_celsius": cpu_temp
         }
     })
 
