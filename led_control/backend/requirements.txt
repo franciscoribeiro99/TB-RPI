@@ -1,0 +1,7 @@
+streamlit
+rpi_ws281x
+pillow
+psutil
+streamlit-autorefresh
+flask 
+flask-cors

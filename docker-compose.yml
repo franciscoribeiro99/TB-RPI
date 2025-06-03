@@ -1,30 +1,50 @@
 services:
   camera:
-    build: .
+    build: ./camera
+    restart: unless-stopped
     container_name: camera_capture
     privileged: true
     devices:
       - /dev/video0:/dev/video0
       - /dev/video2:/dev/video2
-
     volumes:
       - ./images:/app/images
+      - /etc/localtime:/etc/localtime:ro 
     environment:
       - CAPTURE_INTERVAL=0.2
-      - MAX_CAMERAS=2
-      - CAMERA_RESOLUTION=640x480
+      - MAX_CAMERAS=1
+      - CAMERA_RESOLUTION=1920x1080
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro<
     command: python3 main.py
-  
-  led_control:
+
+  led_backend:
     build:
-      context: ./led_control
-    container_name: led_control_ui
-    ports:
-      - "8501:8501"
-    privileged: true                 
-    devices:
-      - /dev/mem:/dev/mem               
+      context: ./led_control/backend
+    container_name: led_backend
+    restart: unless-stopped
     volumes:
-      - ./images:/app/images
+      - ./images:/app/static/images
+      - ~/.ssh/id_techsolve_tb:/app/.ssh/id_techsolve_tb:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro 
+    ports:
+      - "5000:5000"
+    privileged: true
+    devices:
+      - /dev/mem:/dev/mem
     depends_on:
       - camera
+
+  led_frontend:
+    build:
+      context: ./led_control/frontend
+    container_name: led_frontend
+    restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro 
+    ports:
+      - "3000:3000"
+    depends_on:
+      - led_backend

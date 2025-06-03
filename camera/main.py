@@ -3,11 +3,10 @@ import time
 import threading
 from datetime import datetime
 import cv2
-import glob
 
-# get environment variables
+# Get environment variables
 CAPTURE_INTERVAL = float(os.getenv("CAPTURE_INTERVAL", "0.2"))
-MAX_CAMERAS = (int(os.getenv("MAX_CAMERAS", "2")) or 2)
+MAX_CAMERAS = int(os.getenv("MAX_CAMERAS", "2"))
 camera_resolution = os.getenv("CAMERA_RESOLUTION", "640x480")
 
 def create_folder(folder_name):
@@ -16,24 +15,28 @@ def create_folder(folder_name):
 
 def save_image(frame, folder):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    path = os.path.join(folder, f"image_{timestamp}.jpg")
-    cv2.imwrite(path, frame)
-    print(f"Image saved: {path}")
+    filename = f"image_{timestamp}.jpg"
+    full_path = os.path.join(folder, filename)
+    temp_latest = os.path.join(folder, "latest_tmp.jpg")
+    final_latest = os.path.join(folder, "latest.jpg")
+
+    cv2.imwrite(full_path, frame)
+    cv2.imwrite(temp_latest, frame)
+    os.replace(temp_latest, final_latest)
+
+    print(f"Image saved: {full_path}")
 
 def handle_usb_camera(folder, device_path):
     cap = cv2.VideoCapture(device_path)
     if not cap.isOpened():
-        print(f"Failed to open USB camera at {device_path}")
+        print(f"❌ Failed to open USB camera at {device_path}")
         return
 
-
-    # tested on a Raspberry Pi 4 with a 1080p camera 2x it fails
-    # Reduce resolution to avoid USB bandwidth issues
     width, height = map(int, camera_resolution.split('x'))
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
-    print(f"USB camera opened at {device_path}")
+    print(f"✅ USB camera opened at {device_path}")
 
     failure_count = 0
     try:
@@ -51,11 +54,10 @@ def handle_usb_camera(folder, device_path):
             failure_count = 0
             time.sleep(CAPTURE_INTERVAL)
     except KeyboardInterrupt:
-        print(f"Camera at {device_path} stopped.")
+        print(f" Camera at {device_path} stopped.")
     finally:
         cap.release()
 
-# function to find both cameras
 def find_working_cameras(max_devices=10, max_cameras=2):
     working_devices = []
     for i in range(max_devices):
