@@ -1,13 +1,13 @@
 #!/bin/bash
 
 src_dir="/app/static/images"
-ssh_key="/app/.ssh/id_techsolve_tb"
-remote_user="techsolve"
-remote_host="195.162.191.181"
-remote_port=5022
+ssh_key="${SSH_KEY_PATH}"
+remote_user="${REMOTE_USER}"
+remote_host="${REMOTE_HOST}"
+remote_port="${REMOTE_PORT:-22}"
 remote_base_dir="Tb"
 logfile="/app/static/zip_cron.log"
-threshold=40
+threshold=40  # Disk usage threshold in percent
 lockfile="/tmp/transfer_zips.lock"
 tmp_list="/tmp/jpg_list_$$.txt"
 

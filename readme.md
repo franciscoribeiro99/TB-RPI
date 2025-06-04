@@ -19,18 +19,16 @@ restart terminal
 git clone https://github.com/franciscoribeiro99/TB-RPI.git
 cd TB-RPI
 ```
-## Build the docker image
+## Setup config for the sftp server
+The sftp server is used to store the files when the Raspberry Pi is becoming full. Threshold is set to 40% of the disk space. If you want to change the threshold, edit the `led_control/backend/transfer_zips.sh` file.
 ```bash
-docker build -t tb-rpi .
+cp config
+chmod +x setup_sftp.sh
+./setup_sftp.sh
+source ~/.sftp_env
 ```
-## Run the docker container
+
+## Build and run the docker image
 ```bash
-docker run -d \
-    --name tb-rpi \
-    --restart unless-stopped \
-    --network host \
-    -v /etc/localtime:/etc/localtime:ro \
-    -v /etc/timezone:/etc/timezone:ro \
-    -v /home/pi/TB-RPI/config:/config \
-    tb-rpi
+docker compose up -d --build
 ```
