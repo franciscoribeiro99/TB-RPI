@@ -33,6 +33,12 @@ services:
     privileged: true
     devices:
       - /dev/mem:/dev/mem
+    environment:
+      - REMOTE_HOST
+      - REMOTE_PORT
+      - REMOTE_USER
+      - SSH_KEY_PATH
+      - REMOTE_BASE_DIR
     depends_on:
       - camera
 
