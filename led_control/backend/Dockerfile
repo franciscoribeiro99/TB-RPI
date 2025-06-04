@@ -1,31 +1,27 @@
-FROM python:3.9-slim
+FROM dtcooper/raspberrypi-os:python3.11
 
 WORKDIR /app
 
-# install packages
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    libjpeg-dev \
-    libtiff-dev \
-    libturbojpeg0 \
-    cron \
-    openssh-client \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    libjpeg-dev libtiff-dev libturbojpeg0 \
+    libcap-dev git wget build-essential \
+    cron python3-dev i2c-tools \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# copy files
+# Install Python libraries
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# copy scripts
-COPY transfer_zips.sh start.sh ./
-RUN chmod +x /app/transfer_zips.sh /app/start.sh
+# Install Blinka and RPi5 Neopixel support
+RUN pip install --no-cache-dir Adafruit-Blinka Adafruit-Blinka-Raspberry-Pi5-Neopixel
 
-# Copy
+# Copy app files
 COPY . .
 
-# expose port
+# Make scripts executable
+RUN chmod +x /app/transfer_zips.sh /app/start.sh
+
 EXPOSE 5000
 
-# run script
 CMD ["/bin/bash", "./start.sh"]

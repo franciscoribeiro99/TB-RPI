@@ -1,26 +1,33 @@
 from flask import Flask, jsonify, request, send_from_directory
 import psutil, os, subprocess, threading, time
-from rpi_ws281x import Adafruit_NeoPixel, Color
+import board
+import neopixel
 
-LED_COUNT      = 58
-LED_PIN        = 18
-LED_FREQ_HZ    = 800000
-LED_DMA        = 10
-LED_BRIGHTNESS = 65
-LED_INVERT     = False
-LED_CHANNEL    = 0
+# Init GPIO18 LED strip
+LED_COUNT = 58  # Nombre de LEDs connectées à GPIO18
+LED_BRIGHTNESS = 1.0  # 0.0 à 1.0
+PIXEL_ORDER = neopixel.GRB
 
 current_r = 0
 current_g = 0
 current_b = 0
-current_brightness = 0
+current_brightness = 100
 
 app = Flask(__name__, static_folder='static')
 
-strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA,
-                          LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
-strip.begin()
+pixels = neopixel.NeoPixel(board.D18, LED_COUNT, brightness=LED_BRIGHTNESS, pixel_order=PIXEL_ORDER, auto_write=False)
 
+def send_color(r, g, b):
+    for i in range(LED_COUNT):
+        pixels[i] = (r, g, b)
+    pixels.show()
+
+def clear_strip():
+    for i in range(LED_COUNT):
+        pixels[i] = (0, 0, 0)
+    pixels.show()
+
+# Backup logic
 backup_status = {
     "running": False,
     "start_time": None,
@@ -48,33 +55,46 @@ def run_backup():
 @app.route('/api/set-leds', methods=['POST'])
 def set_leds():
     global current_r, current_g, current_b, current_brightness
-
     data = request.get_json()
     current_r = int(data.get('r', 0))
     current_g = int(data.get('g', 0))
     current_b = int(data.get('b', 0))
-    current_brightness = int(data.get('brightness', LED_BRIGHTNESS))
+    current_brightness = int(data.get('brightness', 100))
 
-    print(f"Set LEDs to RGB({current_r},{current_g},{current_b}) with brightness {current_brightness}")
-    strip.setBrightness(current_brightness)
-    color = Color(current_r, current_g, current_b)
-    for i in range(strip.numPixels()):
-        strip.setPixelColor(i, color)
-    strip.show()
+    scale = current_brightness / 100.0
+    r = min(max(int(current_r * scale), 0), 255)
+    g = min(max(int(current_g * scale), 0), 255)
+    b = min(max(int(current_b * scale), 0), 255)
 
+    send_color(r, g, b)
     return jsonify({"status": "ok"})
 
+
+@app.route('/api/led-blink')
+def led_blink():
+    for _ in range(3):
+        send_color(255, 0, 0)
+        time.sleep(1)
+        clear_strip()
+        time.sleep(1)
+    return jsonify({"status": "blinked"})
+
+@app.route('/api/led-state')
+def led_state():
+    return jsonify({
+        "r": current_r,
+        "g": current_g,
+        "b": current_b,
+        "brightness": current_brightness
+    })
 
 @app.route('/api/stats')
 def stats():
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage('/')
-    cpu_temp = None
-
-    # Lire la température CPU (Raspberry Pi)
     try:
         with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
-            cpu_temp = int(f.read()) / 1000.0  # convertit en °C
+            cpu_temp = int(f.read()) / 1000.0
     except:
         cpu_temp = None
 
@@ -93,7 +113,6 @@ def stats():
             "temperature_celsius": cpu_temp
         }
     })
-
 
 @app.route('/api/latest-image')
 def latest_image():
@@ -134,15 +153,8 @@ def backup_log():
     except Exception as e:
         return jsonify({"log": f"Erreur lors de la lecture du log: {str(e)}"})
 
-@app.route('/api/led-state')
-def led_state():
-    return jsonify({
-        "r": current_r,
-        "g": current_g,
-        "b": current_b,
-        "brightness": current_brightness
-    })
-
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    try:
+        app.run(host="0.0.0.0", port=5000)
+    finally:
+        clear_strip()
