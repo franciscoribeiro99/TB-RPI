@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./images:/app/static/images
-      - ~/.ssh/id_techsolve_tb:/app/.ssh/id_techsolve_tb:ro
+      - /home/tb/.ssh/id_techsolve_tb:/app/.ssh/id_techsolve_tb:ro
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro 
     ports:
