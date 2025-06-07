@@ -9,9 +9,11 @@ CAPTURE_INTERVAL = float(os.getenv("CAPTURE_INTERVAL", "0.2"))
 MAX_CAMERAS = int(os.getenv("MAX_CAMERAS", "2"))
 camera_resolution = os.getenv("CAMERA_RESOLUTION", "640x480")
 
+
 def create_folder(folder_name):
     os.makedirs(folder_name, exist_ok=True)
     return folder_name
+
 
 def save_image(frame, folder):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
@@ -26,13 +28,14 @@ def save_image(frame, folder):
 
     print(f"Image saved: {full_path}")
 
+
 def handle_usb_camera(folder, device_path):
     cap = cv2.VideoCapture(device_path)
     if not cap.isOpened():
         print(f"❌ Failed to open USB camera at {device_path}")
         return
 
-    width, height = map(int, camera_resolution.split('x'))
+    width, height = map(int, camera_resolution.split("x"))
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
@@ -58,6 +61,7 @@ def handle_usb_camera(folder, device_path):
     finally:
         cap.release()
 
+
 def find_working_cameras(max_devices=10, max_cameras=2):
     working_devices = []
     for i in range(max_devices):
@@ -75,6 +79,7 @@ def find_working_cameras(max_devices=10, max_cameras=2):
             break
     return working_devices
 
+
 def main():
     base_folder = "/app/images"
     create_folder(base_folder)
@@ -90,6 +95,7 @@ def main():
 
     for t in threads:
         t.join()
+
 
 if __name__ == "__main__":
     main()

@@ -2,16 +2,16 @@
 
 ENV_FILE="$HOME/.sftp_env"
 
-echo "Configuration des informations de connexion SSH/SFTP."
+echo "Configuring SSH/SFTP connection details."
 
-read -rp "Adresse IP ou nom d'hôte du serveur distant : " REMOTE_HOST
-read -rp "Port SSH/SFTP (par défaut 22) : " REMOTE_PORT
+read -rp "Remote server IP address or hostname: " REMOTE_HOST
+read -rp "SSH/SFTP port (default is 22): " REMOTE_PORT
 REMOTE_PORT=${REMOTE_PORT:-22}
-read -rp "Nom d'utilisateur distant : " REMOTE_USER
-read -rp "Chemin absolu vers la clé SSH privée : " SSH_KEY_PATH
+read -rp "Remote username: " REMOTE_USER
+read -rp "Absolute path to the private SSH key: " SSH_KEY_PATH
 
 if [ ! -f "$SSH_KEY_PATH" ]; then
-  echo "Erreur : La clé SSH privée n'existe pas à l'emplacement indiqué."
+  echo "Error: The private SSH key does not exist at the specified location."
   exit 1
 fi
 
@@ -26,5 +26,5 @@ EOF
 
 chmod 600 "$ENV_FILE"
 
-echo "Configuration enregistrée dans $ENV_FILE."
-echo "Chargez ces variables avec : source $ENV_FILE"
+echo "Configuration saved to $ENV_FILE."
+echo "Load these variables with: source $ENV_FILE"
